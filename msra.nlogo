@@ -1,5 +1,5 @@
 ;;;;; VARIABLES ;;;;;
-
+;;Test von Lucas;;
 breed [bacterias bacteria]
 breed [antibiotics antibiotic]
 
