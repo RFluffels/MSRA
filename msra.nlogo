@@ -1,7 +1,10 @@
 ;;;;; VARIABLES ;;;;;
+
+;; die vorhandenen rassen kennzeichnen
 breed [bacterias bacteria]
 breed [antibiotics antibiotic]
 
+;; variablen von bakterien
 bacterias-own
 [
  food
@@ -9,14 +12,17 @@ bacterias-own
  imunity_antibiotics
 ]
 
+;; variablen von antibiotika
 antibiotics-own
 [
   face_x
   face_y
 ]
 
+;; globale variablen
 globals
 [
+ ;; variablen die den zustand des menschens betreffen
  human_last_ratio
  human_infection_ratio
  human_symptoms
@@ -24,6 +30,9 @@ globals
  human_current_antibiotic
  human_under_treatment
  human_antibiotics_tryed
+
+
+ ;; rein statistische variablen
  info_max_resistance
  info_resistance_type
  info_current_dominant_resistance
@@ -36,18 +45,24 @@ globals
 
 to setup
   clear-all
+
+  ;; dargestellte größe der patches
   set-patch-size 16
+
+  ;; veränderung der welt bzw. der anzahl der patches (50*50)
   resize-world 0 50 0 50
+
+  ;; aussehen von breeds
   set-default-shape bacterias "circle"
   set-default-shape antibiotics "triangle 2"
+
+  ;; festgelegte anzahl an bakterien spawnen
   create-bacterias bacteria_amount
   [ setxy random-xcor random-ycor
     set size 0.25
     set does_migrate 1
     set imunity_antibiotics (list )
   ]
-
-  set human_last_ratio 0
 
   reset-ticks
 end
@@ -57,11 +72,22 @@ end
 
 ;;;;; PROCEDURE ;;;;;
 
+;; to go wird jeden tick durchlaufen
 to go
+  ;; alle bakterien überprüfen, ob sie sich überhaupt noch ausbreiten dürfen
   is_migrating
+
+  ;; alle bakterien füttern -> wenn genug gefressen -> verbreiten
   feed_bacterias
+
+  ;; nach dem füttern der bakterien den neuen zustand des menschens bestimmen
+  ;; beinhaltet gegenmaßnahmen vom artzt (antibiotika spawnen usw)
   human_treatment
+
+  ;; antibiotika sich bewegen lassen
   control_antibiotics
+
+  ;; info variablen befüllen
   gather_information
   tick
 end
