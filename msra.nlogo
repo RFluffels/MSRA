@@ -78,7 +78,7 @@ to go
   feed_bacterias
 
   ;; nach dem füttern der bakterien den neuen zustand des menschens bestimmen
-  ;; beinhaltet gegenmaßnahmen vom artzt (antibiotika spawnen usw)
+  ;; beinhaltet gegenmaßnahmen vom arzt (antibiotika spawnen usw)
   human_treatment
 
   ;; hier ist der schaden der antibiotika an den bakterien simuliert
@@ -193,7 +193,9 @@ to feed_bacterias
       set size size + food / 300
 
       ;; satt? Dann verbreite dich, bakterium.
-      if size >= 0.75
+      ;;edit: die Verbreitung von Bakterien sollte m.M.n. auch von der antibiotic_concentration abhängen. /Lucas
+
+      if (size >= 0.75) and (antibiotic_concentration < (0.01 + (random 25) / 100))
       [
         migrate_bacterias color
       ]
@@ -214,6 +216,7 @@ to migrate_bacterias [friendly_color]
     [
       ask a_neighbor
       [
+
         sprout-bacterias 1
         [
           set color friendly_color
@@ -246,6 +249,7 @@ to is_migrating
     ]
   ]
 end
+
 
 to gather_information
   ask bacterias
