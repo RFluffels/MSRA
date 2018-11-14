@@ -12,13 +12,6 @@ bacterias-own
  imunity_antibiotics
 ]
 
-;; variablen von antibiotika
-antibiotics-own
-[
-  face_x
-  face_y
-]
-
 ;; globale variablen
 globals
 [
@@ -36,6 +29,10 @@ globals
  info_max_resistance
  info_resistance_type
  info_current_dominant_resistance
+
+ ;; variablen die das antibiotikum betreffen
+ ;; konzentration im Körper
+ antibiotic_concentration
 ]
 
 
@@ -84,25 +81,12 @@ to go
   ;; beinhaltet gegenmaßnahmen vom artzt (antibiotika spawnen usw)
   human_treatment
 
-  ;; antibiotika sich bewegen lassen
-  control_antibiotics
+  ;; hier ist der schaden der antibiotika an den bakterien simuliert
+  antibiotic_impact
 
   ;; info variablen befüllen
   gather_information
   tick
-end
-
-to gather_information
-  ask bacterias
-  [
-    let imunity_strength length imunity_antibiotics
-    if imunity_strength > info_max_resistance
-    [
-      set info_max_resistance imunity_strength
-      set info_resistance_type imunity_antibiotics
-    ]
-    set info_current_dominant_resistance imunity_antibiotics
-  ]
 end
 
 to human_treatment
@@ -162,49 +146,44 @@ to human_treatment
   ]
 end
 
+to antibiotic_impact
+  ask bacterias[
+    if color != human_current_antibiotic
+    [
+      set size size - random antibiotic_concentration / 100
+    ]
+    if size <= 0
+    [
+      die
+    ]
+  ]
+
+  set antibiotic_concentration antibiotic_concentration - ( random 25 )
+
+  if antibiotic_concentration < 0
+  [
+    let patchblack black
+    change_all_patches_color patchblack
+  ]
+
+end
+
 to take_antibiotics
-  create-antibiotics human_treatment_level * 2
-  [ setxy random-xcor random-ycor
-    set size 4
-    set color human_current_antibiotic
-    set face_x random world-width
-    set face_y random world-height
+  set antibiotic_concentration random human_treatment_level * 50
+  if antibiotic_concentration > 0
+  [
+    change_all_patches_color human_current_antibiotic
   ]
 end
 
-to control_antibiotics
-  ask antibiotics
-  [
-    if ((face_x - xcor < 4) and (face_x - xcor > -4)) and ((face_y - ycor < 4) or (face_y - ycor > -4))
-    [
-      set face_x random world-width
-      set face_y random world-height
-      facexy face_x face_y
-    ]
-    forward 1
-    let antibiotics_color color
-    ask bacterias-on (patch-set (patch-set patch-here neighbors) neighbors)
-    [
-      let resistent 0
-      foreach imunity_antibiotics
-      [
-        imunity_color ->
-        if imunity_color = antibiotics_color
-        [
-          print imunity_color
-          print antibiotics_color
-          set resistent 1
-        ]
-      ]
-
-      if resistent = 0 [ die ]
-    ]
-    if random 100 >= 99 [ die ]
+to change_all_patches_color [patchcolor]
+  ask patches[
+    set pcolor patchcolor - 4
   ]
-
 end
 
 to feed_bacterias
+  ;; alle bakterien füttern.
   ask bacterias
   [
     if does_migrate = 1
@@ -213,7 +192,11 @@ to feed_bacterias
 
       set size size + food / 300
 
-      migrate_bacterias color
+      ;; satt? Dann verbreite dich, bakterium.
+      if size >= 0.75
+      [
+        migrate_bacterias color
+      ]
 
       set food 0
 
@@ -224,35 +207,34 @@ to feed_bacterias
 end
 
 to migrate_bacterias [friendly_color]
-  if size >= 0.75
+    set size 0.5
+    let a_neighbor one-of neighbors
+    let a_imunity imunity_antibiotics
+    if count bacterias-on a_neighbor = 0
     [
-      set size 0.5
-      let a_neighbor one-of neighbors
-      let a_imunity imunity_antibiotics
-      if count bacterias-on a_neighbor = 0
+      ask a_neighbor
       [
-        ask a_neighbor
+        sprout-bacterias 1
         [
-          sprout-bacterias 1
-          [
-            set color friendly_color
-            set size 0.25
-            set imunity_antibiotics a_imunity
-            if random 200 >= 199 [
-              set imunity_antibiotics ( sentence imunity_antibiotics (list(one-of remove black base-colors)) )
-            ]
-            if length imunity_antibiotics = 1 [ set shape "square" ]
-            if length imunity_antibiotics = 2 [ set shape "pentagon" ]
-            if length imunity_antibiotics = 3 [ set shape "star" ]
-            if length imunity_antibiotics = 4 [ set shape "target" ]
-            if length imunity_antibiotics > 4 [ set shape "wheel" ]
+          set color friendly_color
+          set size 0.25
+          set imunity_antibiotics a_imunity
+          if random 200 >= 199[
+            set imunity_antibiotics ( sentence imunity_antibiotics (list(one-of remove black base-colors)) )
           ]
+          if length imunity_antibiotics = 1 [ set shape "square" ]
+          if length imunity_antibiotics = 2 [ set shape "pentagon" ]
+          if length imunity_antibiotics = 3 [ set shape "star" ]
+          if length imunity_antibiotics = 4 [ set shape "target" ]
+          if length imunity_antibiotics > 4 [ set shape "wheel" ]
         ]
       ]
     ]
 end
 
 to is_migrating
+  ;; alle bakterien fragen, ob sie von mindestens 6 nachbarn umzingelt sind. Wenn ja dann
+  ;; setze sie in einen zustand in dem sie sich nicht mehr versuchen auszubreiten
   ask bacterias
   [
     ifelse count bacterias-on neighbors > 6
@@ -262,6 +244,19 @@ to is_migrating
     [
       set does_migrate 1
     ]
+  ]
+end
+
+to gather_information
+  ask bacterias
+  [
+    let imunity_strength length imunity_antibiotics
+    if imunity_strength > info_max_resistance
+    [
+      set info_max_resistance imunity_strength
+      set info_resistance_type imunity_antibiotics
+    ]
+    set info_current_dominant_resistance imunity_antibiotics
   ]
 end
 
