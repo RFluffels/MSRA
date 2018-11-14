@@ -2,7 +2,6 @@
 
 ;; die vorhandenen rassen kennzeichnen
 breed [bacterias bacteria]
-breed [antibiotics antibiotic]
 
 ;; variablen von bakterien
 bacterias-own
@@ -10,6 +9,7 @@ bacterias-own
  food
  does_migrate
  imunity_antibiotics
+ can_migrate
 ]
 
 ;; globale variablen
@@ -20,7 +20,6 @@ globals
  human_infection_ratio
  human_symptoms
  human_treatment_level
- human_current_antibiotic
  human_under_treatment
  human_antibiotics_tryed
 
@@ -33,6 +32,12 @@ globals
  ;; variablen die das antibiotikum betreffen
  ;; konzentration im Körper
  antibiotic_concentration
+ ;; momentanes antibiotika
+ antibiotic_current
+ ;; 1 = bakteriostatisch : verhindert ausbreitung von bakterien
+ ;; 2 = bakteriozid : schädigt oder tötet bakterien
+ antibiotic_type
+
 ]
 
 
@@ -51,12 +56,12 @@ to setup
 
   ;; aussehen von breeds
   set-default-shape bacterias "circle"
-  set-default-shape antibiotics "triangle 2"
 
   ;; festgelegte anzahl an bakterien spawnen
   create-bacterias bacteria_amount
   [ setxy random-xcor random-ycor
     set size 0.25
+    set can_migrate 1
     set does_migrate 1
     set imunity_antibiotics (list )
   ]
@@ -82,8 +87,16 @@ to go
   human_treatment
 
   ;; hier ist der schaden der antibiotika an den bakterien simuliert
-  antibiotic_impact
+  if ticks mod 10 = 0
+  [
+    antibiotic_impact
+  ]
 
+  if ticks mod 500 = 0
+  [
+    let bamount random 3
+    spawn_bakteria bamount
+  ]
   ;; info variablen befüllen
   gather_information
   tick
@@ -101,14 +114,16 @@ to human_treatment
       set human_treatment_level human_symptoms / 2
       ifelse human_under_treatment = 0
       [
-        set human_current_antibiotic one-of remove black base-colors
-        set human_antibiotics_tryed sentence human_antibiotics_tryed (list (human_current_antibiotic))
+        set antibiotic_current one-of remove black base-colors
+        set antibiotic_type ((random 2) + 1)
+        set human_antibiotics_tryed sentence human_antibiotics_tryed (list (antibiotic_current))
       ]
       [
-        if (human_infection_ratio - human_last_ratio >= 0.1)
+        if (human_infection_ratio - human_last_ratio >= 0.2)
         and ( random 5 = 5 )
         [
-         set human_current_antibiotic one-of base-colors
+         set antibiotic_current one-of base-colors
+         set antibiotic_type ((random 2) + 1)
         ]
       ]
       set human_under_treatment 1
@@ -147,36 +162,62 @@ to human_treatment
 end
 
 to antibiotic_impact
-  ask bacterias[
-    if color != human_current_antibiotic
-    [
-      set size size - random antibiotic_concentration / 100
-    ]
-    if size <= 0
-    [
-      die
-    ]
-  ]
-
-  set antibiotic_concentration antibiotic_concentration - ( random 25 )
-
-  if antibiotic_concentration < 0
+  ;; enthält der körper überhaupt antibiotika
+  if antibiotic_concentration > 0
   [
-    let patchblack black
-    change_all_patches_color patchblack
-  ]
+    ask bacterias
+    [
+      ;; resistent?
+      if position antibiotic_current imunity_antibiotics = false
+      [
+        ;; schädige das bakterium
 
+        if antibiotic_type = 1
+        [
+          if random 50 = 0
+          [
+            set can_migrate 0
+          ]
+        ]
+
+        if antibiotic_type = 2
+        [
+         set size size - ((( random 2 ) * antibiotic_concentration) / 500)
+        ]
+      ]
+      ;; entferne den stammteil, wenn er zu klein ist
+      if size <= 0
+      [
+        die
+      ]
+    ]
+
+    ;; reduziere die concentration des antibiotikums
+    set antibiotic_concentration antibiotic_concentration - ( random 2 )
+
+    ;; passe die patch-farbe der antibiotikumsfarbe an
+    if antibiotic_concentration < 0
+    [
+      change_all_patches_color black
+    ]
+  ]
 end
 
 to take_antibiotics
-  set antibiotic_concentration random human_treatment_level * 50
+  set antibiotic_concentration random (human_treatment_level + 1) * 50
   if antibiotic_concentration > 0
   [
-    change_all_patches_color human_current_antibiotic
+    change_all_patches_color antibiotic_current
   ]
 end
 
-to change_all_patches_color [patchcolor]
+to change_all_patches_color [ patchcolor ]
+
+  if patchcolor = pink
+  [
+    set patchcolor 121
+  ]
+
   ask patches[
     set pcolor patchcolor - 4
   ]
@@ -186,7 +227,7 @@ to feed_bacterias
   ;; alle bakterien füttern.
   ask bacterias
   [
-    if does_migrate = 1
+    if does_migrate = 1 and can_migrate = 1
     [
       set food food + random 3
 
@@ -195,7 +236,7 @@ to feed_bacterias
       ;; satt? Dann verbreite dich, bakterium.
       if size >= 0.75
       [
-        migrate_bacterias color
+         migrate_bacterias color
       ]
 
       set food 0
@@ -219,6 +260,7 @@ to migrate_bacterias [friendly_color]
           set color friendly_color
           set size 0.25
           set imunity_antibiotics a_imunity
+          set can_migrate 1
           if random 200 >= 199[
             set imunity_antibiotics ( sentence imunity_antibiotics (list(one-of remove black base-colors)) )
           ]
@@ -243,6 +285,28 @@ to is_migrating
     ]
     [
       set does_migrate 1
+    ]
+  ]
+end
+
+to spawn_bakteria [ bamount ]
+  while [bamount > 0]
+  [
+    let space one-of patches
+    if count bacterias-on space = 0
+    [
+      ask space
+      [
+        sprout-bacterias 1
+        [
+          set color one-of remove black base-colors
+          set size 0.25
+          set can_migrate 1
+          set does_migrate 1
+          set imunity_antibiotics (list )
+        ]
+      ]
+      set bamount bamount - 1
     ]
   ]
 end
