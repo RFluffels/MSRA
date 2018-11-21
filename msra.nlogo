@@ -117,9 +117,9 @@ to bacterias_get_older
   [
     set age age + 1
 
-    if age - random 1000  > 255
+    if age - random 1000  > 600
     [
-      if random 10 < 5 ;; für mehr randomness
+      if random 100 < 5 ;; für mehr randomness
       [
         die
       ]
