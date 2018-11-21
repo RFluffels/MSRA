@@ -84,7 +84,15 @@ to go
 
   ;; nach dem füttern der bakterien den neuen zustand des menschens bestimmen
   ;; beinhaltet gegenmaßnahmen vom arzt (antibiotika spawnen usw)
-  human_treatment
+  if ticks mod 500 = 0
+  [
+    human_treatment_setting
+  ]
+
+  if ticks mod 50 = 0
+  [
+    human_treatment
+  ]
 
   anti_bacteria_procedures
 
@@ -116,67 +124,123 @@ to human_system
   [
     if random 1000 < human_system_strength
     [
-      die
+      ifelse random 3 >= 1
+      [
+        set size size - size / 2
+      ]
+      [
+        die
+      ]
     ]
   ]
 end
 
 
-to human_treatment
-  set human_infection_ratio ( count bacterias / count patches )
-  if ( human_infection_ratio - human_last_ratio >= 0.05)
-       or (human_infection_ratio - human_last_ratio <= -0.05)
-  [
-    set human_symptoms random ( human_infection_ratio * 20 )
+to human_treatment_setting
 
-    ifelse human_symptoms >= 2
+  ;; wie infiziert ist der mensch?
+  set human_infection_ratio ( count bacterias / count patches )
+
+  ;; hat sich der zustand des menschen so verändert dass ein neuer arzt termin fällig ist?
+  if ( human_infection_ratio - human_last_ratio >= human_sensibility)
+       or (human_infection_ratio - human_last_ratio <= (-1 * human_sensibility))
+  [
+    ;; wie viele symptome hat der mensch
+    set human_symptoms random ( human_infection_ratio * 40 )
+
+    ;; wenn der mensch mehr symptome hat als er "verträgt" wird er behandelt
+    ifelse human_symptoms >= human_sensibility_symptoms
     [
+      ;; wie schlimm ist es um den patienten
       set human_treatment_level human_symptoms / 2
+
+      ;; ist der mensch bereits in behanldung?
+      ;; nein - beginne eine behandlung
+      ;; ja   - werte den fortschritt aus und unternehme schritte
       ifelse human_under_treatment = 0
       [
+        ;; setup antibiotic medication
         set antibiotic_current one-of remove black base-colors
         set antibiotic_type ((random 2) + 1)
+
+        ;; gather information
         set human_antibiotics_tryed sentence human_antibiotics_tryed (list (antibiotic_current))
       ]
       [
-        if (human_infection_ratio - human_last_ratio >= 0.2)
-        and ( random 5 = 5 )
+        ;; zustand schlechter?
+        if (human_infection_ratio - human_last_ratio >= human_medication_flexibility)
         [
-         set antibiotic_current one-of base-colors
-         set antibiotic_type ((random 2) + 1)
+
+
+          ;; geschachtelt: je nach infektionsstufe unterschiedliche stufen des umstiegs auf eine neue medikation
+          ifelse human_infection_ratio > 0.1
+          [
+            ifelse human_infection_ratio > 0.3
+            [
+              ifelse human_infection_ratio > 0.5
+              [
+                set antibiotic_current one-of base-colors
+                set antibiotic_type ((random 2) + 1)
+              ]
+              [
+                if random 1000 < 500
+                [
+                  set antibiotic_current one-of base-colors
+                  set antibiotic_type ((random 2) + 1)
+                ]
+              ]
+            ]
+            [
+              if random 1000 < 250
+              [
+                set antibiotic_current one-of base-colors
+                set antibiotic_type ((random 2) + 1)
+              ]
+            ]
+          ]
+          [
+            if random 1000 < 10
+            [
+              set antibiotic_current one-of base-colors
+              set antibiotic_type ((random 2) + 1)
+            ]
+          ]
+
         ]
       ]
       set human_under_treatment 1
     ]
     [
-      ;;;; Treatment is over, but antibiotics should be taken furthermore
+      ;; es gibt nicht mehr genügend symptome als das der mensch es einsieht behandelt zu werden
       set human_under_treatment 2
     ]
 
-
+    ;; alte infektionsrate speichern
     set human_last_ratio human_infection_ratio
   ]
 
-  if ticks mod 40 = 0
-  [
-    if human_under_treatment = 1
-    [
-      if random 10 <= 9
-      [
-        take_antibiotics
-      ]
-    ]
+end
 
-    if human_under_treatment = 2
+to human_treatment
+
+  ;; wird der mensch behandelt?
+  if human_under_treatment = 1
+  [
+    if random 10 <= 9
     [
-      if random 10 <= 9
-      [
-        take_antibiotics
-      ]
-      if random 10 >= 7
-      [
-        set human_under_treatment 0
-      ]
+      take_antibiotics
+    ]
+  ]
+
+  if human_under_treatment = 2
+  [
+    if random 10 <= 9
+    [
+      take_antibiotics
+    ]
+    if random 10 >= 7
+    [
+      set human_under_treatment 0
     ]
   ]
 end
@@ -329,7 +393,14 @@ to spawn_bakteria [ bamount ]
           set size 0.25
           set can_migrate 1
           set does_migrate 1
+
           set imunity_antibiotics (list )
+          let imunity_count random area_dangerous_type
+
+          while [ imunity_count != 0 ] [
+            set imunity_antibiotics ( sentence imunity_antibiotics (list(one-of remove black base-colors)) )
+            set imunity_count imunity_count - 1
+          ]
         ]
       ]
       set bamount bamount - 1
@@ -445,7 +516,7 @@ INPUTBOX
 179
 314
 human_system_impact_at_tick
-10.0
+5.0
 1
 0
 Number
@@ -593,7 +664,7 @@ INPUTBOX
 244
 868
 bacteria_chance_to_develop_new_imunity
-1000.0
+100.0
 1
 0
 Number
@@ -628,6 +699,62 @@ antibiotic_current
 17
 1
 11
+
+INPUTBOX
+19
+11
+148
+71
+area_dangerous_type
+1.0
+1
+0
+Number
+
+SLIDER
+1372
+377
+1569
+410
+human_sensibility
+human_sensibility
+0.005
+0.1
+0.03
+0.001
+1
+NIL
+HORIZONTAL
+
+SLIDER
+1381
+447
+1625
+480
+human_sensibility_symptoms
+human_sensibility_symptoms
+1
+7
+2.0
+1
+1
+NIL
+HORIZONTAL
+
+SLIDER
+1384
+507
+1657
+540
+human_medication_flexibility
+human_medication_flexibility
+0.01
+0.2
+0.05
+0.001
+1
+NIL
+HORIZONTAL
 
 @#$#@#$#@
 ## WHAT IS IT?
