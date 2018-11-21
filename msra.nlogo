@@ -86,21 +86,41 @@ to go
   ;; beinhaltet gegenmaßnahmen vom arzt (antibiotika spawnen usw)
   human_treatment
 
-  ;; hier ist der schaden der antibiotika an den bakterien simuliert
-  if ticks mod 10 = 0
-  [
-    antibiotic_impact
-  ]
+  anti_bacteria_procedures
 
-  if ticks mod 500 = 0
+  if ticks mod spawn_bacteria_chance_at_tick = 0
   [
-    let bamount random 3
+    let bamount random max_spawned_bacteria
     spawn_bakteria bamount
   ]
   ;; info variablen befüllen
   gather_information
   tick
 end
+
+to anti_bacteria_procedures
+  ;; hier ist der schaden der antibiotika an den bakterien simuliert
+  if ticks mod antibiotic_impact_at_tick = 0
+  [
+    antibiotic_impact
+  ]
+
+  if ticks mod human_system_impact_at_tick = 0
+  [
+    human_system
+  ]
+end
+
+to human_system
+  ask bacterias
+  [
+    if random 1000 < human_system_strength
+    [
+      die
+    ]
+  ]
+end
+
 
 to human_treatment
   set human_infection_ratio ( count bacterias / count patches )
@@ -172,55 +192,36 @@ to antibiotic_impact
       [
         ;; schädige das bakterium
 
+        ;; verkrüpple es
         if antibiotic_type = 1
         [
-          if random 50 = 0
+          if random 10000 < antibiotic_chance_to_unmigrate
           [
             set can_migrate 0
           ]
         ]
 
+        ;; töte bakterien
         if antibiotic_type = 2
         [
-         set size size - ((( random 2 ) * antibiotic_concentration) / 500)
+         set size size - ((( random 2 ) * antibiotic_concentration) / antibiotic_fatality)
         ]
+
       ]
       ;; entferne den stammteil, wenn er zu klein ist
-      if size <= 0
+      if size <= kill_bacteria_at_size
       [
         die
       ]
     ]
 
     ;; reduziere die concentration des antibiotikums
-    set antibiotic_concentration antibiotic_concentration - ( random 2 )
-
-    ;; passe die patch-farbe der antibiotikumsfarbe an
-    if antibiotic_concentration < 0
-    [
-      change_all_patches_color black
-    ]
+    set antibiotic_concentration antibiotic_concentration - ( random reduce_antibiotic_concentration_after_impact )
   ]
 end
 
 to take_antibiotics
-  set antibiotic_concentration random (human_treatment_level + 1) * 50
-  if antibiotic_concentration > 0
-  [
-    change_all_patches_color antibiotic_current
-  ]
-end
-
-to change_all_patches_color [ patchcolor ]
-
-  if patchcolor = pink
-  [
-    set patchcolor 121
-  ]
-
-  ask patches[
-    set pcolor patchcolor - 4
-  ]
+  set antibiotic_concentration random (human_treatment_level + 1) * antibiotic_concentration_amount_multiplier
 end
 
 to feed_bacterias
@@ -235,8 +236,9 @@ to feed_bacterias
 
       ;; satt? Dann verbreite dich, bakterium.
       ;;edit: die Verbreitung von Bakterien sollte m.M.n. auch von der antibiotic_concentration abhängen. /Lucas
+      let my_color color
 
-      if (size >= 0.75) and (antibiotic_concentration < (0.01 + (random 25) / 100))
+      if (size >= 0.75) and (antibiotic_concentration < (0.01 + (random 25) / 100)) and (count (bacterias-on neighbors) with [color = my_color] < 6)
       [
          migrate_bacterias color
       ]
@@ -250,31 +252,48 @@ to feed_bacterias
 end
 
 to migrate_bacterias [friendly_color]
-    set size 0.5
-    let a_neighbor one-of neighbors
-    let a_imunity imunity_antibiotics
-    if count bacterias-on a_neighbor = 0
-    [
-      ask a_neighbor
-      [
+  set size 0.5
+  let a_neighbor one-of neighbors
+  let a_imunity imunity_antibiotics
 
-        sprout-bacterias 1
+  ask a_neighbor
+  [
+    ifelse count bacterias-on a_neighbor != 0
+    [
+      if random 4 >= 3
+      [
+        ask bacterias-on a_neighbor
         [
-          set color friendly_color
-          set size 0.25
-          set imunity_antibiotics a_imunity
-          set can_migrate 1
-          if random 200 >= 199[
-            set imunity_antibiotics ( sentence imunity_antibiotics (list(one-of remove black base-colors)) )
-          ]
-          if length imunity_antibiotics = 1 [ set shape "square" ]
-          if length imunity_antibiotics = 2 [ set shape "pentagon" ]
-          if length imunity_antibiotics = 3 [ set shape "star" ]
-          if length imunity_antibiotics = 4 [ set shape "target" ]
-          if length imunity_antibiotics > 4 [ set shape "wheel" ]
+          die
         ]
+        sprout_bacteria a_neighbor friendly_color a_imunity
       ]
     ]
+    [
+      sprout_bacteria a_neighbor friendly_color a_imunity
+    ]
+  ]
+
+end
+
+to sprout_bacteria [patch_var friendly_color a_imunity]
+  ask patch_var[
+    sprout-bacterias 1
+    [
+      set color friendly_color
+      set size 0.25
+      set imunity_antibiotics a_imunity
+      set can_migrate 1
+      if random 200 >= 199[
+        set imunity_antibiotics ( sentence imunity_antibiotics (list(one-of remove black base-colors)) )
+      ]
+      if length imunity_antibiotics = 1 [ set shape "square" ]
+      if length imunity_antibiotics = 2 [ set shape "pentagon" ]
+      if length imunity_antibiotics = 3 [ set shape "star" ]
+      if length imunity_antibiotics = 4 [ set shape "target" ]
+      if length imunity_antibiotics > 4 [ set shape "wheel" ]
+    ]
+  ]
 end
 
 to is_migrating
@@ -330,10 +349,10 @@ end
 ;;;;; PROCEDURE ;;;;;
 @#$#@#$#@
 GRAPHICS-WINDOW
-297
-32
-1121
-857
+532
+23
+1356
+848
 -1
 -1
 16.0
@@ -374,10 +393,10 @@ NIL
 1
 
 SLIDER
-8
-187
-195
-220
+16
+125
+203
+158
 bacteria_amount
 bacteria_amount
 0
@@ -404,6 +423,124 @@ NIL
 NIL
 NIL
 0
+
+INPUTBOX
+18
+358
+179
+418
+antibiotic_impact_at_tick
+10.0
+1
+0
+Number
+
+INPUTBOX
+18
+254
+179
+314
+human_system_impact_at_tick
+10.0
+1
+0
+Number
+
+INPUTBOX
+180
+254
+341
+314
+human_system_strength
+10.0
+1
+0
+Number
+
+INPUTBOX
+17
+164
+178
+224
+spawn_bacteria_chance_at_tick
+500.0
+1
+0
+Number
+
+INPUTBOX
+181
+164
+342
+224
+max_spawned_bacteria
+5.0
+1
+0
+Number
+
+INPUTBOX
+190
+398
+351
+458
+antibiotic_chance_to_unmigrate
+100.0
+1
+0
+Number
+
+SLIDER
+190
+359
+369
+392
+antibiotic_fatality
+antibiotic_fatality
+250
+750
+500.0
+1
+1
+NIL
+HORIZONTAL
+
+SLIDER
+18
+476
+358
+509
+kill_bacteria_at_size
+kill_bacteria_at_size
+0
+0.24
+0.0
+0.01
+1
+NIL
+HORIZONTAL
+
+INPUTBOX
+23
+559
+184
+619
+reduce_antibiotic_concentration_after_impact
+2.0
+1
+0
+Number
+
+INPUTBOX
+22
+635
+183
+695
+antibiotic_concentration_amount_multiplier
+50.0
+1
+0
+Number
 
 @#$#@#$#@
 ## WHAT IS IT?
