@@ -141,6 +141,12 @@ to human_treatment_setting
   ;; wie infiziert ist der mensch?
   set human_infection_ratio ( count bacterias / count patches )
 
+  if human_infection_ratio < 0.01
+  [
+    set human_under_treatment 0
+
+  ]
+
   ;; hat sich der zustand des menschen so verändert dass ein neuer arzt termin fällig ist?
   if ( human_infection_ratio - human_last_ratio >= human_sensibility)
        or (human_infection_ratio - human_last_ratio <= (-1 * human_sensibility))
@@ -226,19 +232,24 @@ to human_treatment
   ;; wird der mensch behandelt?
   if human_under_treatment = 1
   [
-    if random 10 <= 9
+    ;; tabletten nehmen
+    if random 100 < human_chance_to_take_antibiotics
     [
       take_antibiotics
     ]
   ]
 
+  ;; der mensch befindet sich am ende der behandlung
   if human_under_treatment = 2
   [
-    if random 10 <= 9
+    ;; trotzdem noch tabletten nehmen
+    if random 100 < human_chance_to_take_antibiotics
     [
       take_antibiotics
     ]
-    if random 10 >= 7
+    ;; der mensch entscheidet die behandlung ab zu brechen
+    ;; je eher der mensch die tabletten nimmt desto weniger ist er dazu bereit die therapie entgegen der aussage des arztes zu beenden
+    if random 100 > human_chance_to_take_antibiotics
     [
       set human_under_treatment 0
     ]
@@ -451,10 +462,10 @@ ticks
 30.0
 
 BUTTON
-36
-83
-109
-116
+20
+81
+93
+114
 NIL
 setup
 NIL
@@ -468,10 +479,10 @@ NIL
 1
 
 SLIDER
-16
-125
-203
-158
+150
+11
+337
+44
 bacteria_amount
 bacteria_amount
 0
@@ -483,10 +494,10 @@ NIL
 HORIZONTAL
 
 BUTTON
-123
-83
-186
-116
+115
+81
+178
+114
 NIL
 go
 T
@@ -500,10 +511,10 @@ NIL
 0
 
 INPUTBOX
-18
-358
-179
-418
+4
+646
+165
+706
 antibiotic_impact_at_tick
 10.0
 1
@@ -511,10 +522,10 @@ antibiotic_impact_at_tick
 Number
 
 INPUTBOX
-18
-254
-179
-314
+2
+401
+163
+461
 human_system_impact_at_tick
 5.0
 1
@@ -522,10 +533,10 @@ human_system_impact_at_tick
 Number
 
 INPUTBOX
-180
-254
-341
-314
+164
+401
+325
+461
 human_system_strength
 10.0
 1
@@ -533,10 +544,10 @@ human_system_strength
 Number
 
 INPUTBOX
-17
-164
-178
-224
+5
+133
+166
+193
 spawn_bacteria_chance_at_tick
 500.0
 1
@@ -544,10 +555,10 @@ spawn_bacteria_chance_at_tick
 Number
 
 INPUTBOX
-181
-164
-342
-224
+169
+133
+330
+193
 max_spawned_bacteria
 5.0
 1
@@ -555,10 +566,10 @@ max_spawned_bacteria
 Number
 
 INPUTBOX
-190
-398
-370
-458
+176
+686
+356
+746
 antibiotic_chance_to_unmigrate
 100.0
 1
@@ -566,25 +577,25 @@ antibiotic_chance_to_unmigrate
 Number
 
 SLIDER
-190
-359
-369
-392
+176
+647
+355
+680
 antibiotic_fatality
 antibiotic_fatality
 250
 750
-496.0
+250.0
 1
 1
 NIL
 HORIZONTAL
 
 SLIDER
-18
-476
-358
+169
+353
 509
+386
 kill_bacteria_at_size
 kill_bacteria_at_size
 0
@@ -596,10 +607,10 @@ NIL
 HORIZONTAL
 
 INPUTBOX
-23
-559
-258
-619
+176
+816
+411
+876
 reduce_antibiotic_concentration_after_impact
 2.0
 1
@@ -607,10 +618,10 @@ reduce_antibiotic_concentration_after_impact
 Number
 
 INPUTBOX
-22
-635
-241
-695
+176
+751
+395
+811
 antibiotic_concentration_amount_multiplier
 50.0
 1
@@ -618,10 +629,10 @@ antibiotic_concentration_amount_multiplier
 Number
 
 INPUTBOX
-25
-706
-186
-766
+169
+194
+330
+254
 food_multiplier
 2.0
 1
@@ -629,10 +640,10 @@ food_multiplier
 Number
 
 SLIDER
-189
-708
-379
-741
+332
+133
+522
+166
 max_bacteria_size
 max_bacteria_size
 0.25
@@ -644,10 +655,10 @@ NIL
 HORIZONTAL
 
 SLIDER
-24
-770
-329
-803
+169
+319
+474
+352
 bacteria_chance_to_conquer_area
 bacteria_chance_to_conquer_area
 0
@@ -659,35 +670,33 @@ NIL
 HORIZONTAL
 
 INPUTBOX
-26
-808
-244
-868
+169
+258
+387
+318
 bacteria_chance_to_develop_new_imunity
-100.0
+500.0
 1
 0
 Number
 
 PLOT
-1383
-106
-1583
-256
+1376
+20
+1826
+272
 plot 1
 NIL
 NIL
 0.0
-10.0
+1.0
 0.0
-10.0
+1.0
 true
 false
 "" ""
 PENS
-"default" 1.0 0 -16777216 true "" "plot count turtles"
-"pen-1" 1.0 0 -11881837 true "" "plot antibiotic_concentration"
-"pen-2" 1.0 0 -7500403 true "" "plot antibiotic_current"
+"default" 1.0 0 -16113878 true "" "plot human_infection_ratio"
 
 MONITOR
 1416
@@ -712,10 +721,10 @@ area_dangerous_type
 Number
 
 SLIDER
-1372
-377
-1569
-410
+165
+463
+362
+496
 human_sensibility
 human_sensibility
 0.005
@@ -727,10 +736,10 @@ NIL
 HORIZONTAL
 
 SLIDER
-1381
-447
-1625
-480
+165
+498
+409
+531
 human_sensibility_symptoms
 human_sensibility_symptoms
 1
@@ -742,16 +751,31 @@ NIL
 HORIZONTAL
 
 SLIDER
-1384
-507
-1657
-540
+164
+533
+437
+566
 human_medication_flexibility
 human_medication_flexibility
 0.01
 0.2
-0.05
+0.06
 0.001
+1
+NIL
+HORIZONTAL
+
+SLIDER
+164
+569
+473
+602
+human_chance_to_take_antibiotics
+human_chance_to_take_antibiotics
+0
+100
+90.0
+1
 1
 NIL
 HORIZONTAL
