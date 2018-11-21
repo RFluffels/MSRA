@@ -10,6 +10,7 @@ bacterias-own
  does_migrate
  imunity_antibiotics
  can_migrate
+ age
 ]
 
 ;; globale variablen
@@ -64,6 +65,7 @@ to setup
     set can_migrate 1
     set does_migrate 1
     set imunity_antibiotics (list )
+    set age 0
   ]
 
   reset-ticks
@@ -76,6 +78,9 @@ end
 
 ;; to go wird jeden tick durchlaufen
 to go
+  ;; alle Bakterien altern
+  bacterias_get_older
+
   ;; alle bakterien überprüfen, ob sie sich überhaupt noch ausbreiten dürfen
   is_migrating
 
@@ -104,6 +109,22 @@ to go
   ;; info variablen befüllen
   gather_information
   tick
+end
+
+to bacterias_get_older
+  ;;die Bakterien werden nach jedem Tick älter, nach einer bestimmten Lebensdauer sterben sie
+  ask bacterias
+  [
+    set age age + 1
+
+    if age - random 1000  > 255
+    [
+      if random 10 < 5 ;; für mehr randomness
+      [
+        die
+      ]
+    ]
+  ]
 end
 
 to anti_bacteria_procedures
