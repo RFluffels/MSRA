@@ -147,7 +147,7 @@ to human_system
     [
       ifelse random 3 >= 1
       [
-        set size size - size / 2
+        set size size - random size / 2
       ]
       [
         die
@@ -537,7 +537,7 @@ INPUTBOX
 165
 706
 antibiotic_impact_at_tick
-10.0
+20.0
 1
 0
 Number
@@ -548,7 +548,7 @@ INPUTBOX
 163
 461
 human_system_impact_at_tick
-5.0
+200.0
 1
 0
 Number
@@ -581,7 +581,7 @@ INPUTBOX
 330
 193
 max_spawned_bacteria
-5.0
+3.0
 1
 0
 Number
@@ -592,7 +592,7 @@ INPUTBOX
 356
 746
 antibiotic_chance_to_unmigrate
-100.0
+10.0
 1
 0
 Number
@@ -600,14 +600,14 @@ Number
 SLIDER
 176
 647
-355
+364
 680
 antibiotic_fatality
 antibiotic_fatality
-250
-750
-250.0
-1
+50
+2000
+700.0
+50
 1
 NIL
 HORIZONTAL
@@ -644,7 +644,7 @@ INPUTBOX
 395
 811
 antibiotic_concentration_amount_multiplier
-50.0
+40.0
 1
 0
 Number
@@ -684,7 +684,7 @@ bacteria_chance_to_conquer_area
 bacteria_chance_to_conquer_area
 0
 100
-5.0
+10.0
 1
 1
 NIL
@@ -795,7 +795,7 @@ human_chance_to_take_antibiotics
 human_chance_to_take_antibiotics
 0
 100
-90.0
+70.0
 1
 1
 NIL
