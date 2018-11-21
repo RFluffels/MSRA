@@ -188,7 +188,7 @@ to antibiotic_impact
     ask bacterias
     [
       ;; resistent?
-      if position antibiotic_current imunity_antibiotics = false
+      if member? antibiotic_current imunity_antibiotics = false
       [
         ;; schädige das bakterium
 
@@ -230,23 +230,22 @@ to feed_bacterias
   [
     if does_migrate = 1 and can_migrate = 1
     [
-      set food food + random 3
+      set food food + random food_multiplier
 
       set size size + food / 300
 
       ;; satt? Dann verbreite dich, bakterium.
       ;;edit: die Verbreitung von Bakterien sollte m.M.n. auch von der antibiotic_concentration abhängen. /Lucas
-      let my_color color
 
-      if (size >= 0.75) and (antibiotic_concentration < (0.01 + (random 25) / 100)) and (count (bacterias-on neighbors) with [color = my_color] < 6)
+      if (size >= max_bacteria_size) and (antibiotic_concentration < (0.01 + (random 25) / 100))
       [
          migrate_bacterias color
       ]
 
       set food 0
 
-      if size > 0.75
-      [set size 0.75]
+      if size > max_bacteria_size
+      [set size max_bacteria_size]
     ]
   ]
 end
@@ -260,7 +259,7 @@ to migrate_bacterias [friendly_color]
   [
     ifelse count bacterias-on a_neighbor != 0
     [
-      if random 4 >= 3
+      if random 100 < bacteria_chance_to_conquer_area
       [
         ask bacterias-on a_neighbor
         [
@@ -284,14 +283,18 @@ to sprout_bacteria [patch_var friendly_color a_imunity]
       set size 0.25
       set imunity_antibiotics a_imunity
       set can_migrate 1
-      if random 200 >= 199[
+      if random 10000 < bacteria_chance_to_develop_new_imunity [
         set imunity_antibiotics ( sentence imunity_antibiotics (list(one-of remove black base-colors)) )
       ]
-      if length imunity_antibiotics = 1 [ set shape "square" ]
-      if length imunity_antibiotics = 2 [ set shape "pentagon" ]
-      if length imunity_antibiotics = 3 [ set shape "star" ]
-      if length imunity_antibiotics = 4 [ set shape "target" ]
-      if length imunity_antibiotics > 4 [ set shape "wheel" ]
+      if length imunity_antibiotics = 1 [ set shape "triangle" ]
+      if length imunity_antibiotics = 2 [ set shape "triangle 2" ]
+      if length imunity_antibiotics = 3 [ set shape "square" ]
+      if length imunity_antibiotics = 4 [ set shape "square 2" ]
+      if length imunity_antibiotics = 5 [ set shape "pentagon" ]
+      if length imunity_antibiotics = 6 [ set shape "x" ]
+      if length imunity_antibiotics = 7 [ set shape "star" ]
+      if length imunity_antibiotics = 8 [ set shape "target" ]
+      if length imunity_antibiotics > 9 [ set shape "wheel" ]
     ]
   ]
 end
@@ -301,7 +304,8 @@ to is_migrating
   ;; setze sie in einen zustand in dem sie sich nicht mehr versuchen auszubreiten
   ask bacterias
   [
-    ifelse count bacterias-on neighbors > 6
+    let my_color color
+    ifelse count (bacterias-on neighbors) with [color = my_color] > 6
     [
       set does_migrate 0
     ]
@@ -482,7 +486,7 @@ Number
 INPUTBOX
 190
 398
-351
+370
 458
 antibiotic_chance_to_unmigrate
 100.0
@@ -499,7 +503,7 @@ antibiotic_fatality
 antibiotic_fatality
 250
 750
-500.0
+496.0
 1
 1
 NIL
@@ -523,7 +527,7 @@ HORIZONTAL
 INPUTBOX
 23
 559
-184
+258
 619
 reduce_antibiotic_concentration_after_impact
 2.0
@@ -534,13 +538,96 @@ Number
 INPUTBOX
 22
 635
-183
+241
 695
 antibiotic_concentration_amount_multiplier
 50.0
 1
 0
 Number
+
+INPUTBOX
+25
+706
+186
+766
+food_multiplier
+2.0
+1
+0
+Number
+
+SLIDER
+189
+708
+379
+741
+max_bacteria_size
+max_bacteria_size
+0.25
+1
+0.75
+0.01
+1
+NIL
+HORIZONTAL
+
+SLIDER
+24
+770
+329
+803
+bacteria_chance_to_conquer_area
+bacteria_chance_to_conquer_area
+0
+100
+5.0
+1
+1
+NIL
+HORIZONTAL
+
+INPUTBOX
+26
+808
+244
+868
+bacteria_chance_to_develop_new_imunity
+1000.0
+1
+0
+Number
+
+PLOT
+1383
+106
+1583
+256
+plot 1
+NIL
+NIL
+0.0
+10.0
+0.0
+10.0
+true
+false
+"" ""
+PENS
+"default" 1.0 0 -16777216 true "" "plot count turtles"
+"pen-1" 1.0 0 -11881837 true "" "plot antibiotic_concentration"
+"pen-2" 1.0 0 -7500403 true "" "plot antibiotic_current"
+
+MONITOR
+1416
+299
+1542
+344
+NIL
+antibiotic_current
+17
+1
+11
 
 @#$#@#$#@
 ## WHAT IS IT?
