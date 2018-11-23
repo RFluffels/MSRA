@@ -29,6 +29,8 @@ globals
  info_max_resistance
  info_resistance_type
  info_current_dominant_resistance
+ info_human_system_kills
+ info_antibiotika_kills
 
  ;; variablen die das antibiotikum betreffen
  ;; konzentration im Körper
@@ -150,6 +152,7 @@ to human_system
         set size size - random size / 2
       ]
       [
+        set info_human_system_kills info_human_system_kills + 1
         die
       ]
     ]
@@ -307,6 +310,7 @@ to antibiotic_impact
       ;; entferne den stammteil, wenn er zu klein ist
       if size <= kill_bacteria_at_size
       [
+        set info_antibiotika_kills info_antibiotika_kills + 1
         die
       ]
     ]
@@ -669,7 +673,7 @@ max_bacteria_size
 max_bacteria_size
 0.25
 1
-0.75
+0.69
 0.01
 1
 NIL
