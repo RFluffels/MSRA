@@ -669,7 +669,7 @@ max_bacteria_size
 max_bacteria_size
 0.25
 1
-0.75
+0.69
 0.01
 1
 NIL
@@ -765,7 +765,7 @@ human_sensibility_symptoms
 human_sensibility_symptoms
 1
 7
-2.0
+1.0
 1
 1
 NIL
