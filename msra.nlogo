@@ -101,7 +101,7 @@ to go
 
   anti_bacteria_procedures
 
-  if ticks mod spawn_bacteria_chance_at_tick = 0
+  if ticks mod spawn_bacteria_chance_at_tick = 0 ;; y
   [
     let bamount random max_spawned_bacteria
     spawn_bakteria bamount
@@ -508,7 +508,7 @@ bacteria_amount
 bacteria_amount
 0
 100
-7.0
+0.0
 1
 1
 NIL
@@ -684,7 +684,7 @@ bacteria_chance_to_conquer_area
 bacteria_chance_to_conquer_area
 0
 100
-10.0
+62.0
 1
 1
 NIL
@@ -765,7 +765,7 @@ human_sensibility_symptoms
 human_sensibility_symptoms
 1
 7
-2.0
+1.0
 1
 1
 NIL
@@ -780,7 +780,7 @@ human_medication_flexibility
 human_medication_flexibility
 0.01
 0.2
-0.06
+0.059
 0.001
 1
 NIL
@@ -795,7 +795,7 @@ human_chance_to_take_antibiotics
 human_chance_to_take_antibiotics
 0
 100
-70.0
+83.0
 1
 1
 NIL
