@@ -31,6 +31,7 @@ globals
  info_current_dominant_resistance
  info_human_system_kills
  info_antibiotika_kills
+ info_count_imunity_developed
 
  ;; variablen die das antibiotikum betreffen
  ;; konzentration im Körper
@@ -330,7 +331,7 @@ to feed_bacterias
   [
     if does_migrate = 1 and can_migrate = 1
     [
-      set food food + random food_multiplier
+      set food food + (random food_base) * food_multiplier
 
       set size size + food / 300
 
@@ -385,6 +386,8 @@ to sprout_bacteria [patch_var friendly_color a_imunity]
       set can_migrate 1
       if random 10000 < bacteria_chance_to_develop_new_imunity [
         set imunity_antibiotics ( sentence imunity_antibiotics (list(one-of remove black base-colors)) )
+        set info_count_imunity_developed info_count_imunity_developed + 1
+
       ]
       if length imunity_antibiotics = 1 [ set shape "triangle" ]
       if length imunity_antibiotics = 2 [ set shape "triangle 2" ]
@@ -659,7 +662,7 @@ INPUTBOX
 330
 254
 food_multiplier
-2.0
+1.0
 1
 0
 Number
@@ -709,7 +712,7 @@ PLOT
 1376
 20
 1826
-272
+148
 plot 1
 NIL
 NIL
@@ -724,10 +727,10 @@ PENS
 "default" 1.0 0 -16113878 true "" "plot human_infection_ratio"
 
 MONITOR
-1416
-299
-1542
-344
+1722
+509
+1848
+554
 NIL
 antibiotic_current
 17
@@ -804,6 +807,39 @@ human_chance_to_take_antibiotics
 1
 NIL
 HORIZONTAL
+
+SLIDER
+332
+196
+504
+229
+food_base
+food_base
+0
+100
+2.0
+1
+1
+NIL
+HORIZONTAL
+
+PLOT
+1377
+161
+1830
+311
+plot 2
+NIL
+NIL
+0.0
+10.0
+0.0
+10.0
+true
+false
+"" ""
+PENS
+"default" 1.0 0 -16777216 true "" "plot antibiotic_concentration"
 
 @#$#@#$#@
 ## WHAT IS IT?
