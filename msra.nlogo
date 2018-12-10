@@ -19,6 +19,7 @@ globals
  ;; variablen die den zustand des menschens betreffen
  human_last_ratio
  human_infection_ratio
+ human_infection_ratio_existed
  human_symptoms
  human_treatment_level
  human_under_treatment
@@ -81,6 +82,22 @@ end
 
 ;; to go wird jeden tick durchlaufen
 to go
+
+  ;;überprüft, ob die Infektionsrate bereits einmal zu 0 unterschiedlich war, damit die Simulation nicht bereits am Anfang stoppt
+  if human_infection_ratio != 0
+  [
+    set human_infection_ratio_existed 1
+  ]
+
+  ;; der Mensch ist dann geheilt -> die Simulation wird beendet
+  if (human_infection_ratio = 0)
+  [
+    if human_infection_ratio_existed = 1
+    [
+      stop
+    ]
+  ]
+
   ;; alle Bakterien altern
   bacterias_get_older
 
