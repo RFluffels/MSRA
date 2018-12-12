@@ -33,6 +33,8 @@ globals
  info_human_system_kills
  info_antibiotika_kills
  info_count_imunity_developed
+ info_count_ticks_with_low_num_of_bacteria
+ info_bacterias_died_by_age
 
  ;; variablen die das antibiotikum betreffen
  ;; konzentration im Körper
@@ -141,6 +143,7 @@ to bacterias_get_older
     [
       if random 100 < 5 ;; für mehr randomness
       [
+        set info_bacterias_died_by_age info_bacterias_died_by_age + 1
         die
       ]
     ]
@@ -475,6 +478,11 @@ to gather_information
     ]
     set info_current_dominant_resistance imunity_antibiotics
   ]
+  ;;schaue nach, ob die menschliche Infektionsrate unter 7% liegt
+  if human_infection_ratio <= 0.07
+  [
+   set info_count_ticks_with_low_num_of_bacteria info_count_ticks_with_low_num_of_bacteria + 1
+  ]
 end
 
 ;;;;; PROCEDURE ;;;;;
@@ -693,7 +701,7 @@ max_bacteria_size
 max_bacteria_size
 0.25
 1
-0.69
+0.7
 0.01
 1
 NIL
@@ -708,7 +716,7 @@ bacteria_chance_to_conquer_area
 bacteria_chance_to_conquer_area
 0
 100
-62.0
+55.0
 1
 1
 NIL
@@ -804,7 +812,7 @@ human_medication_flexibility
 human_medication_flexibility
 0.01
 0.2
-0.059
+0.06
 0.001
 1
 NIL
